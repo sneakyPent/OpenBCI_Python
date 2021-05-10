@@ -69,3 +69,7 @@ target/
 .idea/vcs.xml
 
 .DS_Store
+.venv
+myenv
+python-sudo.sh
+.vscode
