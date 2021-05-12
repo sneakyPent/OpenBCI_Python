@@ -138,7 +138,6 @@ class GUI(QMainWindow):
         self.windowCombo.addItems(windowSizeList)
         self.windowCombo.activated[str].connect(self.winDowComboClick)
         # Menu Bar options
-        saveDataAction = QAction('Save in &xls file', self)
         startStreamAction = QAction('&Start streaming', self)
         stopStreamAction = QAction('Sto&p streaming', self)
         connectAction = QAction('&Connect', self)
@@ -150,7 +149,7 @@ class GUI(QMainWindow):
         bandsPlotAction = QAction('Bands', self)
         graphs.addActions([timeSeriesPlotAction, fftPlotAction, bandsPlotAction])
         self.menubar.addActions(
-            [saveDataAction, startStreamAction, stopStreamAction, connectAction, disconnectAction, quitting])
+            [startStreamAction, stopStreamAction, connectAction, disconnectAction, quitting])
         """
                 -MENU BAR ACTIONS FOR EACH OPTION 
                    
@@ -161,7 +160,6 @@ class GUI(QMainWindow):
         object. Lastly pass this action in connect as lambda expression
         
         """
-        saveDataAction.triggered.connect(lambda: self.threadPool.start(Worker(self.board.saveDataXls)))
         startStreamAction.triggered.connect(lambda: self.threadPool.start(Worker(self.board.stream)))
         stopStreamAction.triggered.connect(lambda: self.threadPool.start(Worker(self.board.stop)))
         connectAction.triggered.connect(lambda: self.threadPool.start(Worker(self.board.connect)))
