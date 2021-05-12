@@ -87,6 +87,7 @@ class BoardCytonApi:
             print('Not connected board')
         else:
             self.board.stop()
+            self.store()
 
     def disconnect(self):
         if not self.connected:
@@ -95,7 +96,11 @@ class BoardCytonApi:
             self.board.disconnect()
             self.connected = False
 
-    def saveDataXls(self):
-        self.printingDataConsole = not self.printingDataConsole
-        # t_data = np.array(data[-fs * timeWindow:]).T
-        # print(t_data)
+    def store(self):
+        name = "test1"
+        hf = h5py.File(name + '.hdf5', 'w')
+        hf.create_dataset("signal", data=self.data)
+        hf.create_dataset("filtered signal", data=self.filteredData)
+        hf.create_dataset("packages", data=self.windowedData)
+        hf.create_dataset("filtered packages", data=self.windowedFilteredData)
+
