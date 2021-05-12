@@ -6,7 +6,8 @@ from openbci.cyton import *
 
 
 class BoardCytonApi:
-    def __init__(self, board=None, lowerBand=None, upperBand=None, timeWindow=None, samplingFrequency=None):
+    def __init__(self, windowSize=None, board=None, lowerBand=None, upperBand=None, timeWindow=None,
+                 samplingRate=None):
         if lowerBand is None:
             self.lowerBand = 5
         else:
@@ -19,10 +20,10 @@ class BoardCytonApi:
             self.timeWindow = 5
         else:
             self.timeWindow = timeWindow
-        if samplingFrequency is None:
-            self.samplingFrequency = 250
+        if samplingRate is None:
+            self.samplingRate = 250
         else:
-            self.samplingFrequency = samplingFrequency
+            self.samplingRate = samplingRate
         if board is None:
             self.board = None
         else:
