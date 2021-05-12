@@ -33,9 +33,9 @@ class BoardCytonApi:
         else:
             self.windowSize = windowSize
         self.connected = False
-        self.printingDataConsole = True
-        self.data = [[0, 0, 0, 0, 0, 0, 0, 0]]
-        self.filteredData = [[0, 0, 0, 0, 0, 0, 0, 0]]
+        self.printingDataConsole = False
+        self.data = []
+        self.filteredData = []
         # Define OpenBCI callback function
         self.windowedData = []
         self.windowedFilteredData = []
