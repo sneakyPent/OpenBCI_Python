@@ -9,7 +9,8 @@ from numpy import savetxt
 
 ts_plot = []
 bp_data = [[], [], [], [], [], [], [], []]
-
+bandPassFreqList = ["1-50", "3-30", "4-40", "5-50"]
+windowSizeList = ["1", "2", "3", "4", "5"]
 colors = 'rgbycmwr'
 
 
@@ -87,7 +88,7 @@ class GUI(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.board = BoardCytonApi()
+        self.font = QFont('sanserif', 13)
         self.timer = QTimer()
         self.timer.timeout.connect(self.graphUpdater)
         self.timer.setInterval(0)
@@ -95,7 +96,14 @@ class GUI(QMainWindow):
         self.thread = QThread()
         self.threadPool = QThreadPool()
         self.dock = QDockWidget(self)
+        self.menubar = self.menuBar()
+        self.freqCombo = QComboBox(self)
+        self.windowCombo = QComboBox(self)
         self.initUI()
+        self.board = BoardCytonApi(
+            lowerBand=int(self.freqCombo.currentText().split("-")[0]),
+            upperBand=int(self.freqCombo.currentText().split("-")[1]),
+            windowSize=int(self.windowCombo.currentText()))
         # ff
         widget = QWidget(parent=self)
         self.grid = QGridLayout(widget)
@@ -104,8 +112,31 @@ class GUI(QMainWindow):
         self.show()
 
     def initUI(self):
-        QToolTip.setFont(QFont('SansSerif', 10))
-        menubar = self.menuBar()
+        QToolTip.setFont(self.font)
+        self.menubar = self.menuBar()
+        self.menubar.setFont(self.font)
+        # add combobox for frequency choices
+        msgLabel = QLabel('band pass freq:', self)
+        msgLabel.resize(150, 27)
+        msgLabel.setFont(self.font)
+        msgLabel.move(1000, 0)
+        # combo = QComboBox(self)
+        self.freqCombo.setFont(self.font)
+        self.freqCombo.move(1150, 0)
+        self.freqCombo.resize(70, 27)
+        self.freqCombo.addItems(bandPassFreqList)
+        self.freqCombo.activated[str].connect(self.freqComboClick)
+        # add combobox for timeWindow choices
+        msgLabel = QLabel('window size:', self)
+        msgLabel.resize(150, 27)
+        msgLabel.setFont(self.font)
+        msgLabel.move(1300, 0)
+        self.windowCombo.move(1430, 0)
+        self.windowCombo.resize(70, 27)
+        self.windowCombo.setFont(self.font)
+        self.windowCombo.setEditable(True)
+        self.windowCombo.addItems(windowSizeList)
+        self.windowCombo.activated[str].connect(self.winDowComboClick)
         # Menu Bar options
         saveDataAction = QAction('Save in &xls file', self)
         startStreamAction = QAction('&Start streaming', self)
@@ -113,12 +144,13 @@ class GUI(QMainWindow):
         connectAction = QAction('&Connect', self)
         disconnectAction = QAction('&Disconnect', self)
         quitting = QAction('&QUIT', self)
-        graphs = menubar.addMenu('&Add Graphs')
+        graphs = self.menubar.addMenu('&Add Graphs')
         timeSeriesPlotAction = QAction('Time series', self)
         fftPlotAction = QAction('FFT', self)
         bandsPlotAction = QAction('Bands', self)
         graphs.addActions([timeSeriesPlotAction, fftPlotAction, bandsPlotAction])
-        menubar.addActions([saveDataAction, startStreamAction, stopStreamAction, connectAction, disconnectAction, quitting])
+        self.menubar.addActions(
+            [saveDataAction, startStreamAction, stopStreamAction, connectAction, disconnectAction, quitting])
         """
                 -MENU BAR ACTIONS FOR EACH OPTION 
                    
@@ -129,7 +161,7 @@ class GUI(QMainWindow):
         object. Lastly pass this action in connect as lambda expression
         
         """
-        saveDataAction.triggered.connect(lambda : self.threadPool.start(Worker(self.board.saveDataXls)))
+        saveDataAction.triggered.connect(lambda: self.threadPool.start(Worker(self.board.saveDataXls)))
         startStreamAction.triggered.connect(lambda: self.threadPool.start(Worker(self.board.stream)))
         stopStreamAction.triggered.connect(lambda: self.threadPool.start(Worker(self.board.stop)))
         connectAction.triggered.connect(lambda: self.threadPool.start(Worker(self.board.connect)))
@@ -143,6 +175,22 @@ class GUI(QMainWindow):
         self.resize(2000, 1000)
         self.setStyleSheet("QMainWindow {background: 'black';}");
         self.dock.setWindowTitle('CYTON GUI')
+
+    def freqComboClick(self, freq):
+        try:
+            lowerBound = int(freq.split("-")[0])
+            upperBound = int(freq.split("-")[1])
+            self.board.lowerBand = lowerBound
+            self.board.upperBand = upperBound
+        except Exception:
+            pass
+
+    def winDowComboClick(self, size):
+        try:
+            self.board.windowSize = int(size)
+        except Exception:
+            pass
+        print(self.board.windowSize)
 
     def center(self):
         qr = self.frameGeometry()
@@ -166,7 +214,7 @@ class GUI(QMainWindow):
         print('added bands plot')
 
     def graphUpdater(self):
-        t_data = np.array(self.board.filteredData[-self.board.samplingFrequency * self.board.timeWindow:]).T
+        t_data = np.array(self.board.filteredData[-self.board.samplingRate * self.board.timeWindow:]).T
         for i in range(8):
             if len(ts_plot) > 0:
                 ts_plot[i].clear()
