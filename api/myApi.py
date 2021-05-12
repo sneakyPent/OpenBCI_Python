@@ -28,11 +28,18 @@ class BoardCytonApi:
             self.board = None
         else:
             self.board = board
+        if windowSize is None:
+            self.windowSize = 0
+        else:
+            self.windowSize = windowSize
         self.connected = False
         self.printingDataConsole = True
         self.data = [[0, 0, 0, 0, 0, 0, 0, 0]]
         self.filteredData = [[0, 0, 0, 0, 0, 0, 0, 0]]
         # Define OpenBCI callback function
+        self.windowedData = []
+        self.windowedFilteredData = []
+        self.window = lambda: self.samplingRate * self.windowSize
 
     def save_data(self, sample):
         # store the filtered data
@@ -43,6 +50,20 @@ class BoardCytonApi:
             dtfl.append(filters.bandpass(self.lowerBand, self.upperBand, [dt[i]]).item(0))
         self.data.append(dt)
         self.filteredData.append(dtfl)
+
+        # check if windowed list is empty then get the first n sample, where n is the samplingRate*windowSize
+        # else get the next samplingRate*windowSize/2
+        if not self.windowedData and self.data.__len__() % self.window() == 0:
+            firstWindow = self.data[:]
+            self.windowedData.append(firstWindow)
+            firstWindow = self.filteredData[:]
+            self.windowedFilteredData.append(firstWindow)
+        elif self.windowedData and self.data.__len__() % (self.window() / 2) == 0:
+            newWindow = self.windowedData[-1][-(int(self.window() / 2)):] + self.data[-(int(self.window() / 2)):]
+            self.windowedData.append(newWindow)
+            newWindow = self.windowedFilteredData[-1][-(int(self.window() / 2)):] + self.filteredData[-(int(self.window() / 2)):]
+            self.windowedFilteredData.append(newWindow)
+
         if self.printingDataConsole:
             print([i for i in np.array(self.data[-1:]).tolist()])
             print([i for i in np.array(self.filteredData[-1:]).tolist()])
